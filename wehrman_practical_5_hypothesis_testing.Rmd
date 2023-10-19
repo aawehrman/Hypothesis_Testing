@@ -1,0 +1,95 @@
+### Practical 5
+
+You are studying a fish phenotypic trait, "T," which you hypothesize is dominant over the alternative phenotype "t." In classical Mendelian genetics, the offspring of two heterozygous parents (Tt) should exhibit the dominant and recessive traits in a 3:1 ratio (three individuals with the dominant phenotype for every one individual with the recessive phenotype).
+
+In a tank containing only heterozygous parents (Tt), you inspect 350 juveniles and observe that 254 display the dominant trait (T) and 96 display the recessive trait (t). You aim to use simulation to test whether there's a statistically significant difference between the observed numbers of dominant and recessive traits (254:96) and what you would expect if the trait T is truly dominant in a 3:1 ratio (approximately 263 dominant: 87 recessive, given the sample size of 350).
+
+In other words, imagine a scenario where you have a large number of jars. Each jar contains an immense quantity of marbles that have an exact 3:1 ratio of black (representing the dominant trait) to white (indicative of the recessive trait) marbles. From each jar, you randomly select a sample of 350 marbles. Under the most typical circumstances, given the 3:1 ratio, you would expect to retrieve approximately 263 black and 87 white marbles from each jar.
+
+What you want to do here is to assess the probability of encountering a deviation from this anticipated outcome — specifically, how plausible it is to draw a sample comprising 254 black and 96 white marbles as was the case in your fish tank? How plausible it is to draw a distribution that diverges more substantially from the expected ratio, such as 200 black and 150 white marbles, from a jar. This evaluation helps determine whether the observed variations are within the realm of normal statistical fluctuations or if they signify an unusual event that defies the established 3:1 genetic dominance principle.
+
+Recall that the steps to carry out this analysis are as follows:
+
+1. Compute a test statistic to describe the observed difference between the expected and observed values.
+
+```{r}
+# Define the observed and expected counts
+observed <- c(254, 96)
+
+# 3:1 ratio, 3/4 for dominant (T), 1/4 for recessive (t)
+expected <- c(350 * 3/4, 350 * 1/4)  
+
+
+# Calculate the chi-squared test statistic
+chi_squared <- sum((observed - expected)^2 / expected)
+
+# Calculate the degrees of freedom (df)
+df <- length(observed) - 1
+
+# Calculate the p-value
+p_value <- 1 - pchisq(chi_squared, df)
+
+# Print the results
+cat("Chi-squared test statistic:", chi_squared, "\n")
+cat("Degrees of freedom:", df, "\n")
+cat("P-value:", p_value, "\n")
+```
+
+   Hint: this was covred in the `pdf`
+2. Quantify what is considered a normal sampling variation. In other words, use simulation to determine occurrnces resulting from normal statistical fluctuations. This involves simulating many instances of drawing 350 marbles from jars with a 3:1 ratio and seeing, using the test statistic above, the values that expects due to the randomness inherent to sampling alone.
+
+```{r}
+# Number of simulations
+num_simulations <- 10000
+# Number of marbles in each jar
+jar_size <- 350
+# Expected ratio (3:1)
+expected_ratio <- c(3/4, 1/4)
+# Initialize an empty vector to store simulated test statistics
+simulated_test_statistics <- numeric(num_simulations)
+
+# Perform simulations
+for (i in 1:num_simulations) {
+  # Simulate drawing marbles from a jar
+  simulated_sample <- sample(c("T", "t"), jar_size, replace = TRUE, prob = expected_ratio)
+  # Count the number of each phenotype
+  simulated_counts <- table(simulated_sample)
+  
+  # Calculate the test statistic for this simulation
+  chi_squared_simulated <- sum((simulated_counts - expected_ratio * jar_size)^2 / (expected_ratio * jar_size))
+  
+  # Store the test statistic in the vector
+  simulated_test_statistics[i] <- chi_squared_simulated
+}
+
+# Calculate the observed test statistic
+observed_test_statistic <- sum((observed - expected * jar_size)^2 / (expected * jar_size))
+
+# Calculate the p-value for the observed test statistic
+p_value_observed <- mean(simulated_test_statistics >= observed_test_statistic)
+
+# Plot the distribution of simulated test statistics
+hist(simulated_test_statistics, main = "Distribution of Simulated Test Statistics", xlab = "Chi-squared Test Statistic")
+
+# Print the results
+cat("Observed Test Statistic:", observed_test_statistic, "\n")
+cat("P-value for the Observed Test Statistic:", p_value_observed, "\n")
+
+```
+
+3. Compute an empirical p-value and explain your findings.
+```{r}
+# Observed test statistic
+observed_test_statistic <- sum((observed - expected * jar_size)^2 / (expected * jar_size))
+
+# Calculate the empirical p-value
+empirical_p_value <- mean(simulated_test_statistics >= observed_test_statistic)
+
+# Print the results
+cat("Observed Test Statistic:", observed_test_statistic, "\n")
+cat("Empirical P-value:", empirical_p_value, "\n")
+
+```
+
+Note that the approach described above is similar to the methodology discussed during our class exercise. However, unlike the procedure we followed in class, where we employed permutations as part of simulating a t-test-like process, this example doesn't necessitate permutations.
+
